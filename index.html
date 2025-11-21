@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Happy Monthsary</title>
+    <title>Happy Monthsary Emskieeboo</title>
+    <!-- Inline SVG favicon (heart) so page shows an icon without additional files -->
+    <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230f1020'/><path d='M50 29c-6-13-34-9-34 9 0 15 17 25 34 34 17-9 34-19 34-34 0-18-28-22-34-9z' fill='%23ff6fb5'/></svg>">
+    <meta name="theme-color" content="#0f1020">
     <style>
         :root {
             --bg1: #0f1020;
@@ -423,37 +426,52 @@
             "#ff6fb5", "#ff8ad4", "#ffd166", "#7bf1a8", "#8ab4ff", "#b388ff", "#ff9f1c", "#00d1ff"
         ];
 
+        // Runtime caps to avoid creating too many DOM nodes/animations
+        let CURRENT_SPARKLES = 0, MAX_SPARKLES = 140;
+        let CURRENT_HEARTS = 0, MAX_HEARTS = 100;
+        let CURRENT_CONFETTI = 0, MAX_CONFETTI = 120;
+
         // Emit floating hearts
         function emitHearts(count = 22) {
-            for (let i = 0; i < count; i++) {
+            // cap concurrent hearts
+            const allowed = Math.max(0, Math.min(count, MAX_HEARTS - CURRENT_HEARTS));
+            for (let i = 0; i < allowed; i++) {
+                CURRENT_HEARTS++;
                 const h = document.createElement("div");
                 h.className = "heart";
                 const left = rand(0, 100);
                 h.style.left = left + "vw";
                 h.style.bottom = "-5vh";
-                h.style.setProperty("--dur", rand(6, 12) + "s");
+                const dur = rand(6, 12) + "s";
+                h.style.setProperty("--dur", dur);
                 h.style.filter = `drop-shadow(0 0 18px ${pick(COLORS)}80)`;
                 document.body.appendChild(h);
-                setTimeout(() => h.remove(), (parseFloat(h.style.getPropertyValue("--dur")) * 1000));
+                setTimeout(() => { h.remove(); CURRENT_HEARTS--; }, (parseFloat(dur) * 1000));
             }
         }
 
         // Emit sparkles
         function emitSparkles(count = 50) {
-            for (let i = 0; i < count; i++) {
+            // cap concurrent sparkles
+            const allowed = Math.max(0, Math.min(count, MAX_SPARKLES - CURRENT_SPARKLES));
+            for (let i = 0; i < allowed; i++) {
+                CURRENT_SPARKLES++;
                 const s = document.createElement("div");
                 s.className = "sparkle";
                 s.style.left = rand(0, 100) + "vw";
                 s.style.top = rand(0, 100) + "vh";
-                s.style.setProperty("--sdur", rand(1.2, 3.2) + "s");
+                const sdur = rand(1.2, 3.2) + "s";
+                s.style.setProperty("--sdur", sdur);
                 document.body.appendChild(s);
-                setTimeout(() => s.remove(), 3600);
+                setTimeout(() => { s.remove(); CURRENT_SPARKLES--; }, 3600);
             }
         }
 
         // Emit confetti
         function emitConfetti(count = 80) {
-            for (let i = 0; i < count; i++) {
+            const allowed = Math.max(0, Math.min(count, MAX_CONFETTI - CURRENT_CONFETTI));
+            for (let i = 0; i < allowed; i++) {
+                CURRENT_CONFETTI++;
                 const c = document.createElement("div");
                 c.className = "confetti";
                 const w = rand(6, 10), h = rand(12, 18);
@@ -466,21 +484,26 @@
                 c.style.setProperty("--cdur", rand(3.5, 7.5) + "s");
                 c.style.setProperty("--spin", rand(0.6, 2.2) + "s");
                 document.body.appendChild(c);
-                setTimeout(() => c.remove(), 8000);
+                setTimeout(() => { c.remove(); CURRENT_CONFETTI--; }, 8000);
             }
         }
 
-        // Pointer star trail
-        window.addEventListener("pointermove", (e) => {
-            for (let i = 0; i < 2; i++) {
+        // Pointer star trail (throttled to reduce churn)
+        (function () {
+            let lastPointer = 0;
+            const throttleMs = 60; // at most one burst per 60ms
+            window.addEventListener("pointermove", (e) => {
+                const now = Date.now();
+                if (now - lastPointer < throttleMs) return;
+                lastPointer = now;
                 const t = document.createElement("div");
                 t.className = "trail";
                 t.style.left = (e.clientX + rand(-6, 6)) + "px";
                 t.style.top = (e.clientY + rand(-6, 6)) + "px";
                 document.body.appendChild(t);
                 setTimeout(() => t.remove(), 600);
-            }
-        }, { passive: true });
+            }, { passive: true });
+        })();
 
         // Idle bursts
         function randomBurst() {
@@ -489,10 +512,11 @@
             else if (choice < .66) emitConfetti(rand(50, 100));
             else emitSparkles(rand(30, 80));
         }
-        setInterval(randomBurst, 3500);
-        setTimeout(() => emitHearts(26), 600);
-        setTimeout(() => emitConfetti(100), 1400);
-        setTimeout(() => emitSparkles(60), 2200);
+        // Idle bursts: reduce frequency and sizes to save CPU
+        setInterval(randomBurst, 8000);
+        setTimeout(() => emitHearts(12), 600);
+        setTimeout(() => emitConfetti(36), 1400);
+        setTimeout(() => emitSparkles(20), 2200);
 
         // CTA: bigger show + play music + start background slideshow/collage
         const music = document.getElementById("bg-music");
@@ -573,9 +597,10 @@
                 if (timer) { clearInterval(timer); timer = null; }
             }
 
-            // preload defaults
+            // preload defaults (async decoding to avoid blocking)
             DEFAULT_PATHS.forEach(p => {
                 const img = new Image();
+                try { img.decoding = 'async'; } catch (e) {}
                 img.onload = () => {
                     slides.push(p);
                     createSlide(p);
@@ -633,7 +658,22 @@
                 const w = Math.ceil(vw / cols);
                 const h = Math.ceil(vh / rows);
 
-                const needed = cols * rows;
+                let needed = cols * rows;
+
+                // If needed tiles is very large, increase TILE_SIZE so we cap total tiles
+                const MAX_TILES = 420;
+                if (needed > MAX_TILES) {
+                    // compute a new tile size to reduce tiles to roughly MAX_TILES
+                    const area = vw * vh;
+                    const targetTileArea = Math.ceil(area / MAX_TILES);
+                    const newTileSide = Math.max(TILE_SIZE, Math.ceil(Math.sqrt(targetTileArea)));
+                    const newCols = Math.ceil(vw / newTileSide) + 1;
+                    const newRows = Math.ceil(vh / newTileSide) + 1;
+                    // apply new grid
+                    cols = newCols;
+                    rows = newRows;
+                    needed = cols * rows;
+                }
 
                 // Build a pool of image paths large enough to cover tiles, then shuffle
                 let pool = [];
