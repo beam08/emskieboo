@@ -43,7 +43,7 @@
         .backdrop {
             position: fixed;
             inset: -30vmax;
-            z-index: -1;
+            z-index: -2;
             filter: blur(60px) saturate(1.3);
             background:
                 radial-gradient(60vmax 60vmax at 15% 20%, rgba(255, 138, 212, .25), transparent 60%),
@@ -57,7 +57,7 @@
         .bg-shuffler {
             position: fixed;
             inset: 0;
-            z-index: -2;
+            z-index: -3;
             overflow: hidden;
             pointer-events: none;
         }
@@ -77,6 +77,31 @@
         .bg-shuffler .bg-slide.show {
             opacity: 1;
             transform: scale(1);
+        }
+
+        /* Background collage (black & white tiles that reveal color) */
+        .bg-collage {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            /* above backdrop, below main content */
+            pointer-events: none;
+        }
+
+        .bg-collage .bg-tile {
+            position: absolute;
+            background-position: center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            filter: grayscale(100%) contrast(0.95) saturate(0.6);
+            transition: filter 700ms ease, transform 700ms ease, box-shadow 700ms ease;
+            transform: scale(1);
+        }
+
+        .bg-collage .bg-tile.reveal {
+            filter: none;
+            transform: scale(1.02);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
         }
 
         @keyframes drift {
@@ -367,6 +392,9 @@
 <body>
     <div class="backdrop" aria-hidden="true"></div>
 
+    <!-- Background collage (B/W tiles that reveal color) -->
+    <div class="bg-collage" id="bg-collage" aria-hidden="true"></div>
+
     <!-- Background slideshow (place `bg1.jpg`, `bg2.jpg`, `bg3.jpg` next to this file or edit DEFAULT_PATHS) -->
     <div class="bg-shuffler" id="bg-shuffler" aria-hidden="true"></div>
 
@@ -466,7 +494,7 @@
         setTimeout(() => emitConfetti(100), 1400);
         setTimeout(() => emitSparkles(60), 2200);
 
-        // CTA: bigger show + play music + start background slideshow
+        // CTA: bigger show + play music + start background slideshow/collage
         const music = document.getElementById("bg-music");
         document.getElementById("cta").addEventListener("click", () => {
             emitHearts(40);
@@ -482,6 +510,15 @@
                 console.warn('Slideshow start error', e);
             }
 
+            // Start collage reveal (black & white -> color) if available
+            try {
+                if (window.__bgCollage && typeof window.__bgCollage.startReveal === 'function') {
+                    window.__bgCollage.startReveal();
+                }
+            } catch (e) {
+                console.warn('Collage start error', e);
+            }
+
             // Play music
             music.currentTime = 0;
             music.play().catch(err => console.log("Autoplay blocked:", err));
@@ -492,7 +529,16 @@
             const shufflerEl = document.getElementById('bg-shuffler');
 
             // Default image paths (relative to this HTML). Place these files next to this file.
-            const DEFAULT_PATHS = ['image/bg1.jpg', 'image/bg2.jpg', 'image/bg3.jpg'];
+            const DEFAULT_PATHS = ['image/bg1.png', 'image/bg2.png', 'image/bg3.png', 'image/bg4.png', 'image/bg5.png',
+                'image/bg6.png', 'image/bg7.png', 'image/bg8.png', 'image/bg9.png', 'image/bg10.png',
+                'image/bg11.png', 'image/bg12.png', 'image/bg13.png', 'image/bg14.png', 'image/bg15.png',
+                'image/bg16.png', 'image/bg17.png', 'image/bg18.png', 'image/bg19.png', 'image/bg20.png',
+                'image/bg21.png', 'image/bg22.png', 'image/bg23.png', 'image/bg24.png', 'image/bg25.png',
+                'image/bg26.png', 'image/bg27.png', 'image/bg28.png', 'image/bg29.png', 'image/bg30.png',
+                'image/bg31.png', 'image/bg32.png', 'image/bg33.png', 'image/bg34.png', 'image/bg35.png',
+                'image/bg36.png', 'image/bg37.png', 'image/bg38.png', 'image/bg39.png', 'image/bg40.png',
+                'image/bg41.png', 'image/bg42.png',
+            ];
 
             let slides = [];
             let current = 0;
@@ -542,6 +588,120 @@
             });
 
             window.__bgSlideshow = { startSlideshow, stopSlideshow };
+        })();
+
+        /* Background collage: build a black & white mosaic and reveal tiles randomly */
+        (function () {
+            const container = document.getElementById('bg-collage');
+            if (!container) return;
+
+            const DEFAULT_PATHS = ['image/bg1.png', 'image/bg2.png', 'image/bg3.png', 'image/bg4.png', 'image/bg5.png',
+                'image/bg6.png', 'image/bg7.png', 'image/bg8.png', 'image/bg9.png', 'image/bg10.png',
+                'image/bg11.png', 'image/bg12.png', 'image/bg13.png', 'image/bg14.png', 'image/bg15.png',
+                'image/bg16.png', 'image/bg17.png', 'image/bg18.png', 'image/bg19.png', 'image/bg20.png',
+                'image/bg21.png', 'image/bg22.png', 'image/bg23.png', 'image/bg24.png', 'image/bg25.png',
+                'image/bg26.png', 'image/bg27.png', 'image/bg28.png', 'image/bg29.png', 'image/bg30.png',
+                'image/bg31.png', 'image/bg32.png', 'image/bg33.png', 'image/bg34.png', 'image/bg35.png',
+                'image/bg36.png', 'image/bg37.png', 'image/bg38.png', 'image/bg39.png', 'image/bg40.png',
+                'image/bg41.png', 'image/bg42.png',
+            ];
+            const TILE_SIZE = 140; // px approximate
+            let tiles = [];
+            let revealed = new Set();
+            let revealTimer = null;
+
+            function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+            function shuffleArray(arr) {
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+                }
+                return arr;
+            }
+
+            function buildMosaic() {
+                // clear previous
+                container.innerHTML = '';
+                tiles = [];
+                revealed.clear();
+
+                const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+                const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+                const cols = Math.ceil(vw / TILE_SIZE) + 1;
+                const rows = Math.ceil(vh / TILE_SIZE) + 1;
+                const w = Math.ceil(vw / cols);
+                const h = Math.ceil(vh / rows);
+
+                const needed = cols * rows;
+
+                // Build a pool of image paths large enough to cover tiles, then shuffle
+                let pool = [];
+                if (DEFAULT_PATHS.length > 0) {
+                    while (pool.length < needed) pool = pool.concat(DEFAULT_PATHS.slice());
+                    shuffleArray(pool);
+                    pool = pool.slice(0, needed);
+                }
+
+                let idx = 0;
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const t = document.createElement('div');
+                        t.className = 'bg-tile';
+                        const url = pool[idx] || '';
+                        t.style.left = (c * w) + 'px';
+                        t.style.top = (r * h) + 'px';
+                        t.style.width = w + 'px';
+                        t.style.height = h + 'px';
+                        t.style.backgroundImage = url ? `url(${url})` : '';
+                        container.appendChild(t);
+                        tiles.push(t);
+                        idx++;
+                    }
+                }
+            }
+
+            function revealNext() {
+                let idx;
+                do { idx = Math.floor(Math.random() * tiles.length); } while (revealed.has(idx));
+                revealed.add(idx);
+                tiles[idx].classList.add('reveal');
+
+                // If we've just revealed the last tile, stop and celebrate
+                if (revealed.size >= tiles.length) {
+                    stopReveal();
+                    // small delay so last reveal transition finishes
+                    setTimeout(() => {
+                        try { emitSparkles(80); } catch (e) { /* emitSparkles may be undefined in some contexts */ }
+                        try { emitHearts(26); } catch (e) { }
+                    }, 400);
+                }
+            }
+
+            function startReveal(speed = 350) {
+                if (!tiles.length) buildMosaic();
+                if (revealTimer) return;
+                revealTimer = setInterval(() => revealNext(), speed);
+            }
+
+            function stopReveal() {
+                if (revealTimer) { clearInterval(revealTimer); revealTimer = null; }
+            }
+
+            // rebuild mosaic on resize to keep tiles neat
+            let resizeTimer = null;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    stopReveal();
+                    buildMosaic();
+                }, 300);
+            });
+
+            // initial build (no reveal yet)
+            buildMosaic();
+
+            window.__bgCollage = { startReveal, stopReveal, buildMosaic };
         })();
     </script>
 </body>
