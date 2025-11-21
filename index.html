@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Happy Monthsary</title>
+    <style>
+        :root {
+            --bg1: #0f1020;
+            --bg2: #1b0b2e;
+            --accent: #ff8ad4;
+            --accent2: #ffd166;
+            --accent3: #7bf1a8;
+            --text: #ffffff;
+        }
+
+        @font-face {
+            font-family: "Marcellus";
+            font-style: normal;
+            font-weight: 400;
+            src: local("Marcellus"), local("Marcellus-Regular");
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0
+        }
+
+        body {
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+            color: var(--text);
+            background: radial-gradient(120vmax 80vmax at 10% 10%, #2a1040 0%, var(--bg1) 40%, var(--bg2) 100%);
+            overflow: hidden;
+        }
+
+        /* Animated gradient glow backdrop */
+        .backdrop {
+            position: fixed;
+            inset: -30vmax;
+            filter: blur(60px) saturate(1.3);
+            background:
+                radial-gradient(60vmax 60vmax at 15% 20%, rgba(255, 138, 212, .25), transparent 60%),
+                radial-gradient(50vmax 40vmax at 85% 20%, rgba(123, 241, 168, .25), transparent 60%),
+                radial-gradient(40vmax 50vmax at 50% 80%, rgba(255, 209, 102, .22), transparent 60%);
+            animation: drift 24s linear infinite alternate;
+            pointer-events: none;
+        }
+
+        @keyframes drift {
+            0% {
+                transform: translate3d(0, 0, 0) rotate(0deg)
+            }
+
+            50% {
+                transform: translate3d(2rem, -1rem, 0) rotate(8deg)
+            }
+
+            100% {
+                transform: translate3d(-2rem, 1rem, 0) rotate(-8deg)
+            }
+        }
+
+        /* Center stage */
+        .stage {
+            position: relative;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 7vmin;
+        }
+
+        /* Title styling */
+        .title {
+            position: relative;
+            font-size: clamp(2.4rem, 7vw, 7rem);
+            line-height: 1.05;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            background: conic-gradient(from 210deg at 50% 50%,
+                    #ff6fb5, #ffd166 20%, #7bf1a8 40%, #8ab4ff 60%, #ff6fb5 80%, #ffd166);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 8px 24px rgba(255, 255, 255, .08));
+            margin: 0;
+            animation: shimmer 8s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 0% 50%
+            }
+
+            50% {
+                background-position: 100% 50%
+            }
+
+            100% {
+                background-position: 0% 50%
+            }
+        }
+
+        /* Subtext */
+        .subtitle {
+            margin-top: 1rem;
+            font-size: clamp(1rem, 2.8vw, 1.5rem);
+            color: #e9e7ff;
+            opacity: .9;
+        }
+
+        /* Neon underline */
+        .underline {
+            position: relative;
+            width: min(32rem, 70vw);
+            height: 6px;
+            margin: 1.25rem auto 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .35), transparent);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .underline::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3), #8ab4ff, var(--accent));
+            filter: blur(6px);
+            animation: sweep 3.5s ease-in-out infinite;
+        }
+
+        @keyframes sweep {
+
+            0%,
+            100% {
+                transform: translateX(-80%)
+            }
+
+            50% {
+                transform: translateX(80%)
+            }
+        }
+
+        /* Floating hearts */
+        .heart {
+            position: fixed;
+            width: 18px;
+            height: 18px;
+            transform: rotate(45deg);
+            background: linear-gradient(135deg, #ff6fb5 0%, #ff8ad4 100%);
+            box-shadow: 0 0 18px rgba(255, 111, 181, .6);
+            opacity: .85;
+            animation: floatUp var(--dur) linear forwards;
+            z-index: 2;
+        }
+
+        .heart::before,
+        .heart::after {
+            content: "";
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: inherit;
+        }
+
+        .heart::before {
+            left: -9px
+        }
+
+        .heart::after {
+            top: -9px
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) rotate(45deg);
+                opacity: .0
+            }
+
+            8% {
+                opacity: .85
+            }
+
+            92% {
+                opacity: .85
+            }
+
+            100% {
+                transform: translateY(-110vh) rotate(45deg);
+                opacity: 0
+            }
+        }
+
+        /* Sparkles */
+        .sparkle {
+            position: fixed;
+            width: 2px;
+            height: 2px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 10px 2px rgba(255, 255, 255, .7);
+            animation: twinkle var(--sdur) ease-in-out infinite;
+            opacity: .85;
+            z-index: 1;
+        }
+
+        @keyframes twinkle {
+
+            0%,
+            100% {
+                transform: scale(.6);
+                opacity: .4
+            }
+
+            50% {
+                transform: scale(1.4);
+                opacity: 1
+            }
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 8px;
+            height: 16px;
+            border-radius: 2px;
+            opacity: .95;
+            animation: fall var(--cdur) ease-in forwards, spin var(--spin) linear infinite;
+            z-index: 3;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-10vh) rotate(0deg)
+            }
+
+            100% {
+                transform: translateY(110vh) rotate(360deg)
+            }
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg)
+            }
+
+            100% {
+                transform: rotate(360deg)
+            }
+        }
+
+        /* CTA pulse */
+        .cta {
+            position: fixed;
+            bottom: 2.2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: .65rem 1rem;
+            border: 1px solid rgba(255, 255, 255, .25);
+            color: #fff;
+            background: rgba(255, 255, 255, .05);
+            backdrop-filter: saturate(1.3) blur(8px);
+            border-radius: 999px;
+            font-size: .95rem;
+            letter-spacing: .02em;
+            cursor: pointer;
+            transition: all .25s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+            z-index: 5;
+            animation: pulse 2.4s ease-in-out infinite;
+        }
+
+        .cta:hover {
+            background: rgba(255, 255, 255, .12);
+            transform: translateX(-50%) translateY(-2px)
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 138, 212, .35)
+            }
+
+            50% {
+                box-shadow: 0 0 0 16px rgba(255, 138, 212, 0)
+            }
+        }
+
+        /* Star trail on pointer */
+        .trail {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #fff 0%, #ffd166 50%, transparent 70%);
+            pointer-events: none;
+            z-index: 10;
+            animation: trailFade .6s ease-out forwards;
+            filter: drop-shadow(0 0 10px rgba(255, 209, 102, .8));
+        }
+
+        @keyframes trailFade {
+            0% {
+                transform: scale(1);
+                opacity: 1
+            }
+
+            100% {
+                transform: scale(0);
+                opacity: 0
+            }
+        }
+
+        /* Accessibility: reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+
+            .backdrop,
+            .heart,
+            .sparkle,
+            .confetti,
+            .trail,
+            .underline::before,
+            .title {
+                animation: none
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="backdrop" aria-hidden="true"></div>
+
+    <main class="stage" role="main" aria-label="Happy Monthsary greeting">
+        <div>
+            <h1 class="title">Happy 6th Monthsary</h1>
+            <p class="subtitle">Love2. I love you so much :*</p>
+            <div class="underline" aria-hidden="true"></div>
+        </div>
+    </main>
+
+    <button class="cta" id="cta">Make it extra!</button>
+
+    <!-- Local audio file -->
+    <audio id="bg-music" preload="auto">
+        <source src="music/bg-music.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Utility: random helpers
+        const rand = (min, max) => Math.random() * (max - min) + min;
+        const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+        // Color sets
+        const COLORS = [
+            "#ff6fb5", "#ff8ad4", "#ffd166", "#7bf1a8", "#8ab4ff", "#b388ff", "#ff9f1c", "#00d1ff"
+        ];
+
+        // Emit floating hearts
+        function emitHearts(count = 22) {
+            for (let i = 0; i < count; i++) {
+                const h = document.createElement("div");
+                h.className = "heart";
+                const left = rand(0, 100);
+                h.style.left = left + "vw";
+                h.style.bottom = "-5vh";
+                h.style.setProperty("--dur", rand(6, 12) + "s");
+                h.style.filter = `drop-shadow(0 0 18px ${pick(COLORS)}80)`;
+                document.body.appendChild(h);
+                setTimeout(() => h.remove(), (parseFloat(h.style.getPropertyValue("--dur")) * 1000));
+            }
+        }
+
+        // Emit sparkles
+        function emitSparkles(count = 50) {
+            for (let i = 0; i < count; i++) {
+                const s = document.createElement("div");
+                s.className = "sparkle";
+                s.style.left = rand(0, 100) + "vw";
+                s.style.top = rand(0, 100) + "vh";
+                s.style.setProperty("--sdur", rand(1.2, 3.2) + "s");
+                document.body.appendChild(s);
+                setTimeout(() => s.remove(), 3600);
+            }
+        }
+
+        // Emit confetti
+        function emitConfetti(count = 80) {
+            for (let i = 0; i < count; i++) {
+                const c = document.createElement("div");
+                c.className = "confetti";
+                const w = rand(6, 10), h = rand(12, 18);
+                c.style.width = w + "px";
+                c.style.height = h + "px";
+                c.style.left = rand(0, 100) + "vw";
+                c.style.top = rand(-20, -5) + "vh";
+                c.style.background = pick(COLORS);
+                c.style.transform = `translateY(-10vh) rotate(${rand(0, 360)}deg)`;
+                c.style.setProperty("--cdur", rand(3.5, 7.5) + "s");
+                c.style.setProperty("--spin", rand(0.6, 2.2) + "s");
+                document.body.appendChild(c);
+                setTimeout(() => c.remove(), 8000);
+            }
+        }
+
+        // Pointer star trail
+        window.addEventListener("pointermove", (e) => {
+            for (let i = 0; i < 2; i++) {
+                const t = document.createElement("div");
+                t.className = "trail";
+                t.style.left = (e.clientX + rand(-6, 6)) + "px";
+                t.style.top = (e.clientY + rand(-6, 6)) + "px";
+                document.body.appendChild(t);
+                setTimeout(() => t.remove(), 600);
+            }
+        }, { passive: true });
+
+        // Idle bursts
+        function randomBurst() {
+            const choice = Math.random();
+            if (choice < .33) emitHearts(rand(12, 22));
+            else if (choice < .66) emitConfetti(rand(50, 100));
+            else emitSparkles(rand(30, 80));
+        }
+        setInterval(randomBurst, 3500);
+        setTimeout(() => emitHearts(26), 600);
+        setTimeout(() => emitConfetti(100), 1400);
+        setTimeout(() => emitSparkles(60), 2200);
+
+        // CTA: bigger show + play music
+        const music = document.getElementById("bg-music");
+        document.getElementById("cta").addEventListener("click", () => {
+            emitHearts(40);
+            emitConfetti(160);
+            emitSparkles(120);
+
+            // Play music
+            music.currentTime = 0;
+            music.play().catch(err => console.log("Autoplay blocked:", err));
+        });
+    </script>
+</body>
+
+</html>
