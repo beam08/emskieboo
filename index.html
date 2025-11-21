@@ -43,6 +43,7 @@
         .backdrop {
             position: fixed;
             inset: -30vmax;
+            z-index: -1;
             filter: blur(60px) saturate(1.3);
             background:
                 radial-gradient(60vmax 60vmax at 15% 20%, rgba(255, 138, 212, .25), transparent 60%),
@@ -50,6 +51,32 @@
                 radial-gradient(40vmax 50vmax at 50% 80%, rgba(255, 209, 102, .22), transparent 60%);
             animation: drift 24s linear infinite alternate;
             pointer-events: none;
+        }
+
+        /* Background slideshow slides */
+        .bg-shuffler {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .bg-shuffler .bg-slide {
+            position: absolute;
+            inset: 0;
+            background-position: center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            opacity: 0;
+            transition: opacity 2s ease-in-out, transform 10s ease;
+            transform: scale(1.03);
+            will-change: opacity, transform;
+        }
+
+        .bg-shuffler .bg-slide.show {
+            opacity: 1;
+            transform: scale(1);
         }
 
         @keyframes drift {
@@ -340,6 +367,9 @@
 <body>
     <div class="backdrop" aria-hidden="true"></div>
 
+    <!-- Background slideshow (place `bg1.jpg`, `bg2.jpg`, `bg3.jpg` next to this file or edit DEFAULT_PATHS) -->
+    <div class="bg-shuffler" id="bg-shuffler" aria-hidden="true"></div>
+
     <main class="stage" role="main" aria-label="Happy Monthsary greeting">
         <div>
             <h1 class="title">Happy 6th Monthsary</h1>
@@ -436,17 +466,83 @@
         setTimeout(() => emitConfetti(100), 1400);
         setTimeout(() => emitSparkles(60), 2200);
 
-        // CTA: bigger show + play music
+        // CTA: bigger show + play music + start background slideshow
         const music = document.getElementById("bg-music");
         document.getElementById("cta").addEventListener("click", () => {
             emitHearts(40);
             emitConfetti(160);
             emitSparkles(120);
 
+            // Start slow background slideshow if available
+            try {
+                if (window.__bgSlideshow && typeof window.__bgSlideshow.startSlideshow === 'function') {
+                    window.__bgSlideshow.startSlideshow();
+                }
+            } catch (e) {
+                console.warn('Slideshow start error', e);
+            }
+
             // Play music
             music.currentTime = 0;
             music.play().catch(err => console.log("Autoplay blocked:", err));
         });
+
+        /* Background slow slideshow implementation */
+        (function () {
+            const shufflerEl = document.getElementById('bg-shuffler');
+
+            // Default image paths (relative to this HTML). Place these files next to this file.
+            const DEFAULT_PATHS = ['image/bg1.jpg', 'image/bg2.jpg', 'image/bg3.jpg'];
+
+            let slides = [];
+            let current = 0;
+            let timer = null;
+            const INTERVAL = 7000; // ms between slides
+
+            function createSlide(url) {
+                const d = document.createElement('div');
+                d.className = 'bg-slide';
+                d.style.backgroundImage = `url(${url})`;
+                shufflerEl.appendChild(d);
+                return d;
+            }
+
+            function showSlide(idx) {
+                const els = shufflerEl.children;
+                for (let i = 0; i < els.length; i++) els[i].classList.remove('show');
+                if (els[idx]) els[idx].classList.add('show');
+            }
+
+            function startSlideshow() {
+                if (timer) return; // already running
+                if (slides.length === 0) return;
+                showSlide(current);
+                timer = setInterval(() => {
+                    current = (current + 1) % slides.length;
+                    showSlide(current);
+                }, INTERVAL);
+            }
+
+            function stopSlideshow() {
+                if (timer) { clearInterval(timer); timer = null; }
+            }
+
+            // preload defaults
+            DEFAULT_PATHS.forEach(p => {
+                const img = new Image();
+                img.onload = () => {
+                    slides.push(p);
+                    createSlide(p);
+                    if (slides.length === 1) showSlide(0);
+                };
+                img.onerror = () => {
+                    // file missing or unreachable — ignore
+                };
+                img.src = p;
+            });
+
+            window.__bgSlideshow = { startSlideshow, stopSlideshow };
+        })();
     </script>
 </body>
 
